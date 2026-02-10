@@ -17,7 +17,7 @@ export function DashboardHeader() {
                 FinSight AI
               </h1>
               <p className="text-xs text-muted-foreground -mt-0.5">
-                Conversational Financial Analytics
+                Indian Market Analytics
               </p>
             </div>
           </div>

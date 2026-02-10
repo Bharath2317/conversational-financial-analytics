@@ -12,7 +12,7 @@ import { Chatbot } from "@/components/chatbot";
 import { NlpMetrics } from "@/components/nlp-metrics";
 
 export default function Home() {
-  const [selectedStock, setSelectedStock] = useState("AAPL");
+  const [selectedStock, setSelectedStock] = useState("RELIANCE");
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,12 +22,13 @@ export default function Home() {
       <main className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-foreground tracking-tight text-balance">
-            Conversational Financial Analytics
+            Indian Stock Market Analytics
           </h2>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed">
-            Real-time market data, NLP-powered sentiment analysis, and
-            conversational AI built with the OpenDialog framework. Ask questions
-            in natural language to explore financial insights.
+            Tracking 50 NSE/BSE listed companies in real-time with NLP-powered
+            sentiment analysis and conversational AI built with the OpenDialog
+            framework. Ask questions in natural language to explore Indian market
+            insights.
           </p>
         </div>
 
@@ -98,12 +99,13 @@ export default function Home() {
                 FinSight AI
               </span>
               <span className="text-xs text-muted-foreground">
-                Conversational Financial Analytics Platform
+                Indian Stock Market Analytics Platform
               </span>
             </div>
             <p className="text-xs text-muted-foreground text-center">
-              Built with OpenDialog Framework and NLP Pipelines. Data is
-              simulated for demonstration purposes. Not financial advice.
+              Tracking 50 NSE/BSE stocks with OpenDialog Framework and NLP
+              Pipelines. Data is simulated for demonstration purposes. Not
+              SEBI-registered investment advice.
             </p>
           </div>
         </footer>

@@ -11,6 +11,7 @@ interface StockQuote {
   price: number;
   change: number;
   changePercent: number;
+  exchange: string;
 }
 
 export function StockTicker() {
@@ -31,19 +32,17 @@ export function StockTicker() {
         {[...stocks, ...stocks].map((stock, i) => (
           <div
             key={`${stock.symbol}-${i}`}
-            className="flex items-center gap-2 px-6"
+            className="flex items-center gap-2 px-5"
           >
-            <span className="font-mono text-sm font-semibold text-foreground">
+            <span className="font-mono text-xs font-semibold text-foreground">
               {stock.symbol}
             </span>
-            <span className="font-mono text-sm text-muted-foreground">
-              ${stock.price.toFixed(2)}
+            <span className="font-mono text-xs text-muted-foreground">
+              {"Rs "}{stock.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span
               className={`flex items-center gap-0.5 font-mono text-xs font-medium ${
-                stock.change >= 0
-                  ? "text-accent"
-                  : "text-destructive"
+                stock.change >= 0 ? "text-accent" : "text-destructive"
               }`}
             >
               {stock.change >= 0 ? (

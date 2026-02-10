@@ -21,12 +21,14 @@ interface ChatMessage {
 }
 
 const QUICK_PROMPTS = [
-  "What's the price of AAPL?",
-  "How is NVDA performing?",
-  "Compare MSFT vs GOOGL",
-  "Latest market news",
-  "Market sentiment analysis",
-  "Best stocks to watch",
+  "What's the price of RELIANCE?",
+  "How is TCS performing?",
+  "Compare HDFCBANK vs ICICIBANK",
+  "Latest Indian market news",
+  "How is the banking sector?",
+  "Top stocks to watch",
+  "Nifty 50 levels",
+  "Best IT stocks?",
 ];
 
 export function Chatbot() {
@@ -34,7 +36,7 @@ export function Chatbot() {
     {
       role: "assistant",
       content:
-        "Hello! I'm **FinSight AI**, your conversational financial analytics assistant powered by the OpenDialog framework and NLP pipelines.\n\nI can help you with stock prices, market trends, comparisons, news, sentiment analysis, and investment considerations.\n\nTry asking a question or use one of the quick prompts below!",
+        "Namaste! I'm **FinSight AI**, your conversational Indian stock market analytics assistant powered by the OpenDialog framework and NLP pipelines.\n\nI track **50 NSE/BSE listed companies** in real-time including RELIANCE, TCS, HDFCBANK, INFY, ICICIBANK, and more.\n\nI can help with stock prices, market trends, comparisons, news, sentiment analysis, and sector insights.\n\nTry asking a question or use one of the quick prompts below!",
     },
   ]);
   const [input, setInput] = useState("");

@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono' })
 
 export const metadata: Metadata = {
-  title: 'FinSight AI - Conversational Financial Analytics',
-  description: 'Real-time financial analytics dashboard with conversational AI, market trend analysis, and NLP-powered insights using the OpenDialog framework.',
+  title: 'FinSight AI - Indian Stock Market Analytics',
+  description: 'Real-time Indian stock market analytics dashboard tracking 50 NSE/BSE companies with conversational AI, NLP-powered sentiment analysis, and market trend insights using the OpenDialog framework.',
 }
 
 export const viewport: Viewport = {
