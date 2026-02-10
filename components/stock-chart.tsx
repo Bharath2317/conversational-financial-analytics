@@ -41,7 +41,7 @@ export function StockChart({ symbol }: { symbol: string }) {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold text-foreground">
-              {symbol} Price History
+              {symbol} Price History (NSE)
             </CardTitle>
             <div className="flex items-center gap-1">
               {RANGES.map((r) => (
@@ -86,7 +86,7 @@ export function StockChart({ symbol }: { symbol: string }) {
                   tick={{ fontSize: 11, fill: "hsl(215, 20%, 55%)" }}
                   tickFormatter={(v) => {
                     const d = new Date(v);
-                    return `${d.getMonth() + 1}/${d.getDate()}`;
+                    return `${d.getDate()}/${d.getMonth() + 1}`;
                   }}
                   axisLine={{ stroke: "hsl(222, 20%, 16%)" }}
                   tickLine={false}
@@ -96,7 +96,7 @@ export function StockChart({ symbol }: { symbol: string }) {
                   axisLine={false}
                   tickLine={false}
                   domain={["auto", "auto"]}
-                  tickFormatter={(v) => `$${v}`}
+                  tickFormatter={(v) => `Rs ${v.toLocaleString("en-IN")}`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -106,7 +106,7 @@ export function StockChart({ symbol }: { symbol: string }) {
                     fontSize: "12px",
                     color: "hsl(210, 40%, 96%)",
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
+                  formatter={(value: number) => [`Rs ${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, "Price"]}
                   labelFormatter={(label) => `Date: ${label}`}
                 />
                 <Area
@@ -146,7 +146,7 @@ export function StockChart({ symbol }: { symbol: string }) {
                   tick={{ fontSize: 10, fill: "hsl(215, 20%, 55%)" }}
                   tickFormatter={(v) => {
                     const d = new Date(v);
-                    return `${d.getMonth() + 1}/${d.getDate()}`;
+                    return `${d.getDate()}/${d.getMonth() + 1}`;
                   }}
                   axisLine={{ stroke: "hsl(222, 20%, 16%)" }}
                   tickLine={false}
@@ -155,7 +155,7 @@ export function StockChart({ symbol }: { symbol: string }) {
                   tick={{ fontSize: 10, fill: "hsl(215, 20%, 55%)" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`}
+                  tickFormatter={(v) => `${(v / 100000).toFixed(0)}L`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -166,7 +166,7 @@ export function StockChart({ symbol }: { symbol: string }) {
                     color: "hsl(210, 40%, 96%)",
                   }}
                   formatter={(value: number) => [
-                    `${(value / 1000000).toFixed(1)}M`,
+                    `${(value / 100000).toFixed(1)}L`,
                     "Volume",
                   ]}
                 />
