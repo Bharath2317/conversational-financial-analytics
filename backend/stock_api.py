@@ -8,7 +8,59 @@ Functions:
 
 import yfinance as yf
 import json
+from functools import lru_cache
 from typing import Union
+
+CURRENCY_SYMBOLS = {
+    "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "INR": "₹", "KRW": "₩",
+    "CNY": "¥", "HKD": "HK$", "CAD": "C$", "AUD": "A$", "CHF": "CHF ", "TWD": "NT$",
+}
+_SUFFIX_CURRENCY = {
+    ".NS": "INR", ".BO": "INR", ".T": "JPY", ".KS": "KRW", ".KQ": "KRW", ".L": "GBP", ".HK": "HKD",
+    ".PA": "EUR", ".DE": "EUR", ".AS": "EUR", ".MI": "EUR", ".MC": "EUR", ".SW": "CHF",
+    ".TO": "CAD", ".AX": "AUD", ".SS": "CNY", ".SZ": "CNY", ".TW": "TWD",
+}
+
+
+def currency_symbol(code: str) -> str:
+    """Display symbol for an ISO currency code (falls back to the code itself)."""
+    return CURRENCY_SYMBOLS.get(code, f"{code} ")
+
+
+@lru_cache(maxsize=512)
+def get_currency(symbol: str) -> str:
+    """Trading currency of a symbol (best effort; never raises)."""
+    symbol = symbol.upper()
+    try:
+        cur = yf.Ticker(symbol).fast_info.get("currency")
+        if cur:
+            return str(cur).upper()
+    except Exception:
+        pass
+    for suffix, cur in _SUFFIX_CURRENCY.items():
+        if symbol.endswith(suffix):
+            return cur
+    return "USD"
+
+
+@lru_cache(maxsize=512)
+def get_company_name(symbol: str) -> str:
+    """Company name for a symbol, via .info or (when that is blocked) Yahoo search."""
+    symbol = symbol.upper()
+    try:
+        info = yf.Ticker(symbol).info or {}
+        name = info.get("longName") or info.get("shortName")
+        if name:
+            return name
+    except Exception:
+        pass
+    try:
+        for q in yf.Search(symbol, max_results=8).quotes:
+            if str(q.get("symbol", "")).upper() == symbol:
+                return q.get("longname") or q.get("shortname") or symbol
+    except Exception:
+        pass
+    return symbol
 
 
 def get_stock_price(symbol: str) -> dict:
@@ -47,20 +99,8 @@ def get_stock_price(symbol: str) -> dict:
         change = round(price - prev_close, 4) if prev_close else 0.0
         change_pct = round((change / prev_close) * 100, 4) if prev_close else 0.0
 
-        # Optional metadata — best effort only.
-        name, currency = symbol.upper(), None
-        try:
-            currency = ticker.fast_info.get("currency")
-        except Exception:
-            pass
-        try:
-            info = ticker.info or {}
-            name = info.get("longName") or info.get("shortName") or name
-            currency = currency or info.get("currency")
-        except Exception:
-            pass
-        if not currency:
-            currency = "INR" if symbol.upper().endswith((".NS", ".BO")) else "USD"
+        name = get_company_name(symbol)
+        currency = get_currency(symbol)
 
         return {
             "symbol": symbol.upper(),

@@ -33,7 +33,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 
 # Our own modules
-from stock_api          import get_stock_price, get_stock_history
+from stock_api          import get_stock_price, get_stock_history, get_currency, currency_symbol
 from sentiment_analysis import analyze_sentiment
 from market_analyzer    import detect_trend, full_analysis
 from nlp_pipeline       import analyze as nlp_analyze
@@ -512,7 +512,7 @@ def _respond_market_trend(ticker: str) -> dict:
 
     reply = (
         f"📊 **Market Trend — {ticker}** (last 3 months, 14-day window)\n"
-        f"   Latest Price : ${report['latest_price']}\n"
+        f"   Latest Price : {currency_symbol(get_currency(ticker))}{report['latest_price']}\n"
         f"   SMA-14 Trend : {icons[sma['trend']]} {sma['trend'].upper()}  "
         f"(price vs MA: {sma['deviation_pct']:+.2f}%)\n"
         f"   EMA-14 Trend : {icons[ema['trend']]} {ema['trend'].upper()}  "
@@ -605,10 +605,11 @@ def _respond_recommendation(ticker: str) -> dict:
     pred = predict_next_price(ticker)
     pred_note = ""
     if "error" not in pred:
+        cs     = currency_symbol(get_currency(ticker))
         arrow  = "⬆" if pred["direction"] == "up" else "⬇" if pred["direction"] == "down" else "➡"
         pred_note = (
             f"\n   🧠 ML Price Forecast (next day):\n"
-            f"      {arrow} Current: ${pred['current_price']}  →  Predicted: ${pred['predicted_price']} "
+            f"      {arrow} Current: {cs}{pred['current_price']}  →  Predicted: {cs}{pred['predicted_price']} "
             f"({pred['predicted_change_pct']:+.2f}%)\n"
             f"      Model: {pred['model_used']}  |  R²={pred['r2_score']}  |  Confidence: {pred['confidence']}\n"
         )
