@@ -140,8 +140,11 @@ def eval_intent() -> dict:
     # Held-out set (drop anything that also appears in training data)
     train_set = {t.lower() for t in texts}
     held = [(t, l) for t, l in HELD_OUT_INTENT if t.lower() not in train_set]
+    # Fit in memory only — do not overwrite models/intent_classifier.pkl
     clf = IntentClassifier()
-    clf.train(TRAINING_DATA, force=True)
+    enc = clf.label_encoder.fit_transform(labels)
+    clf.pipeline.fit(texts, enc)
+    clf._trained = True
     ht, hl = zip(*held)
     hp = [clf.predict(t)[0] for t in ht]
     h_acc = accuracy_score(hl, hp)

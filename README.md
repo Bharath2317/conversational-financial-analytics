@@ -29,7 +29,7 @@
 | Response relevance      | ~81%                                               |
 | Conversation success    | ~87%                                               |
 
-> These figures are quoted from the report. No script in this repository reproduces them yet.
+> These figures are quoted from the report. `backend/evaluate.py` measures them independently — see [Evaluation Metrics](#evaluation-metrics); the intent result is close, the trend result is not reproduced.
 
 ---
 
@@ -346,8 +346,15 @@ http://localhost:8000
 - **Best selected** by R² on 20% holdout test set
 - **Saved to**: `models/{TICKER}_predictor.pkl`
 
-| Ticker | Best Model          | R² Score |
-| ------ | ------------------- | -------- |
+| Ticker | Best Model | R² Score (saved `*_meta.json`) |
+| ------ | ---------- | ------------------------------ |
+| AAPL   | Ridge      | 0.792                          |
+| TSLA   | Ridge      | 0.788                          |
+| MSFT   | Ridge      | 0.955                          |
+
+> Random Forest and Gradient Boosting scored negative R² on AAPL's hold-out period, because tree models cannot extrapolate beyond the training price range. R² on absolute price is also inflated by the lag/moving-average features; it is not evidence of forecasting skill.
+
+------ | ------------------- | -------- |
 | AAPL   | Random Forest       | 0.893    |
 | TSLA   | Random Forest / GBM | ~0.85+   |
 | MSFT   | Ridge               | 0.955    |
@@ -356,8 +363,20 @@ http://localhost:8000
 
 ## 📊 Evaluation Metrics
 
-| Metric                    | Value       |
-| ------------------------- | ----------- |
+Measured by `python backend/evaluate.py` (results in `data/evaluation.json`, served by `GET /metrics`).
+
+| Component | Method | Result |
+| --- | --- | --- |
+| Intent classification | 5-fold CV on 201 training examples | Acc 86.1%, F1 85.9% |
+| Intent classification | 47 held-out hand-written queries | Acc 91.5%, P 92.6%, R 91.7%, F1 91.5% |
+| Entity (ticker) extraction | 25 hand-written queries (incl. 5 with no entity) | Acc / F1 100% (small, easy set) |
+| Trend signal (SMA-14) | Walk-forward, 5-day forward direction, AAPL/MSFT/TSLA, 1,316 signals | **49.9%** vs 52.8% for an "always up" baseline |
+
+**Not measured automatically:** response relevance, conversation success rate and response time (they need human ratings or a live server).
+
+> **Discrepancy with the dissertation:** the report states ~82% trend accuracy. Under the walk-forward test above, the SMA trend signal does not beat a coin flip or a naive baseline. Either the report's figure used a different definition or it should be revised. Entity results come from a small test set written by the authors, so treat them as a smoke test, not a benchmark.
+
+------------------------- | ----------- |
 | Intent Detection Accuracy | **92.4%**   |
 | Entity Recognition F1     | **90.1%**   |
 | Trend Prediction Accuracy | **82.7%**   |

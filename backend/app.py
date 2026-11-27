@@ -132,22 +132,31 @@ async def clear_all_alerts():
 
 @app.get("/metrics", tags=["Analytics"])
 async def get_metrics():
-    """Return system evaluation metrics for reporting / paper."""
+    """Return system evaluation metrics for reporting / paper.
+
+    Serves measured results from data/evaluation.json (produced by
+    `python backend/evaluate.py`) when present; otherwise falls back to the
+    figures quoted in the dissertation, clearly labelled as such.
+    """
+    import json
+    eval_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "evaluation.json")
+    if os.path.exists(eval_path):
+        with open(eval_path, encoding="utf-8") as fh:
+            return {"source": "measured (backend/evaluate.py)", **json.load(fh)}
     return {
+        "source": "reported in dissertation (not yet measured — run backend/evaluate.py)",
         "model": "FinBot v1.0 — Financial Chatbot",
         "evaluation_metrics": {
-            "intent_detection_accuracy":   {"value": 92.4, "unit": "%"},
-            "entity_recognition_f1":       {"value": 90.1, "unit": "%"},
-            "trend_prediction_accuracy":   {"value": 82.7, "unit": "%"},
-            "sentiment_analysis_accuracy": {"value": 88.3, "unit": "%"},
-            "chatbot_success_rate":        {"value": 87.5, "unit": "%"},
-            "avg_response_time_ms":        {"value": 620,  "unit": "ms"},
+            "intent_detection_accuracy":   {"value": 92, "unit": "%"},
+            "entity_recognition_f1":       {"value": 90, "unit": "%"},
+            "trend_prediction_accuracy":   {"value": 82, "unit": "%"},
+            "response_relevance":          {"value": 81, "unit": "%"},
+            "chatbot_success_rate":        {"value": 87, "unit": "%"},
         },
         "classifier": {
             "model":         "TF-IDF + Multinomial Naive Bayes",
-            "training_size": 44,
             "intents":       ["stock_price", "market_trend", "news_sentiment", "recommendation"],
-            "vectorizer":    "TfidfVectorizer (1-2 ngrams)",
+            "vectorizer":    "TfidfVectorizer (1-3 ngrams)",
         },
         "nlp": {
             "tokenizer":    "NLTK punkt",

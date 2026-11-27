@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-11-27 15:46",
+  "intent": {
+    "training_size": 201,
+    "cross_validation_5fold": {
+      "accuracy": 86.1,
+      "precision": 86.3,
+      "recall": 86.0,
+      "f1": 85.9
+    },
+    "held_out": {
+      "n": 47,
+      "accuracy": 91.5,
+      "precision": 92.6,
+      "recall": 91.7,
+      "f1": 91.5,
+      "errors": [
+        {
+          "text": "how has Google been performing lately",
+          "expected": "market_trend",
+          "got": "news_sentiment"
+        },
+        {
+          "text": "is the momentum positive for Infosys",
+          "expected": "market_trend",
+          "got": "news_sentiment"
+        },
+        {
+          "text": "Tesla price movement over the last few weeks",
+          "expected": "market_trend",
+          "got": "stock_price"
+        },
+        {
+          "text": "show me news on Amazon",
+          "expected": "news_sentiment",
+          "got": "stock_price"
+        }
+      ]
+    }
+  },
+  "entity": {
+    "n": 25,
+    "accuracy": 100.0,
+    "precision": 100.0,
+    "recall": 100.0,
+    "f1": 100.0,
+    "errors": []
+  },
+  "trend": {
+    "method": "SMA-14 vs price, dead-band 0.5%, 5-day forward direction",
+    "signals": 1316,
+    "directional_accuracy": 49.9,
+    "always_up_baseline": 52.8,
+    "per_symbol": {
+      "AAPL": {
+        "signals": 431,
+        "accuracy": 49.2,
+        "always_up_baseline": 55.2
+      },
+      "MSFT": {
+        "signals": 426,
+        "accuracy": 51.6,
+        "always_up_baseline": 54.9
+      },
+      "TSLA": {
+        "signals": 459,
+        "accuracy": 49.0,
+        "always_up_baseline": 48.6
+      }
+    }
+  },
+  "not_measured": [
+    "response_relevance and conversation_success_rate need human-rated conversations; avg response time needs a live server."
+  ]
+}
