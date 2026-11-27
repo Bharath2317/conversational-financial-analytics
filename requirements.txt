@@ -3,7 +3,7 @@ uvicorn
 yfinance
 pandas
 numpy
-scikit-learn
+scikit-learn==1.8.0
 spacy
 nltk
 textblob
