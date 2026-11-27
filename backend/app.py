@@ -225,7 +225,7 @@ async def stock_trend(symbol: str, period: str = "3mo"):
     return data
 
 
-@app.get("/health", tags=["System"])
+@app.api_route("/health", methods=["GET", "HEAD"], tags=["System"])
 async def health():
     return {"status": "ok", "service": "FinBot Financial Chatbot API"}
 
