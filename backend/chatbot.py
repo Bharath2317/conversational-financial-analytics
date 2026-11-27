@@ -19,10 +19,12 @@ Model saved to models/intent_classifier.pkl — only retrains if new data.
 
 import json
 import os
+from functools import lru_cache
 import re
 import warnings
 warnings.filterwarnings("ignore")
 import joblib
+import yfinance as yf
 
 # scikit-learn
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -277,6 +279,21 @@ TICKER_MAP: dict[str, str] = {
     "amd": "AMD",
     "salesforce": "CRM",
     "oracle": "ORCL",
+    # Global large caps (US / Europe / Asia)
+    "berkshire": "BRK-B", "berkshire hathaway": "BRK-B",
+    "jpmorgan": "JPM", "jp morgan": "JPM", "goldman sachs": "GS", "bank of america": "BAC",
+    "visa": "V", "mastercard": "MA", "paypal": "PYPL", "coinbase": "COIN",
+    "walmart": "WMT", "costco": "COST", "target": "TGT", "home depot": "HD",
+    "coca cola": "KO", "coca-cola": "KO", "pepsi": "PEP", "pepsico": "PEP", "mcdonalds": "MCD", "starbucks": "SBUX", "nike": "NKE",
+    "disney": "DIS", "uber": "UBER", "airbnb": "ABNB", "spotify": "SPOT", "shopify": "SHOP",
+    "boeing": "BA", "ford": "F", "general motors": "GM", "exxon": "XOM", "chevron": "CVX",
+    "pfizer": "PFE", "johnson & johnson": "JNJ", "johnson and johnson": "JNJ", "moderna": "MRNA", "eli lilly": "LLY", "unitedhealth": "UNH",
+    "broadcom": "AVGO", "qualcomm": "QCOM", "adobe": "ADBE", "cisco": "CSCO", "ibm": "IBM", "palantir": "PLTR", "snowflake": "SNOW",
+    "tsmc": "TSM", "taiwan semiconductor": "TSM", "asml": "ASML", "sap": "SAP", "nestle": "NSRGY", "novo nordisk": "NVO",
+    "toyota": "TM", "sony": "SONY", "alibaba": "BABA", "tencent": "TCEHY", "baidu": "BIDU", "nio": "NIO", "byd": "BYDDY",
+    "samsung": "005930.KS", "shell": "SHEL", "bp": "BP", "hsbc": "HSBC", "volkswagen": "VWAGY", "lvmh": "MC.PA",
+    "s&p 500": "^GSPC", "sp500": "^GSPC", "nasdaq": "^IXIC", "dow jones": "^DJI",
+    "solana": "SOL-USD", "dogecoin": "DOGE-USD", "xrp": "XRP-USD", "ripple": "XRP-USD",
     # Indian stocks (NSE via yfinance suffix .NS)
     "tata": "TMPV.NS",
     "tata motors": "TMPV.NS",
@@ -340,38 +357,117 @@ class IntentClassifier:
 #  ENTITY EXTRACTOR
 # ══════════════════════════════════════════════════════════════════════════════
 
+_FINANCE_WORDS = {
+    "stock", "stocks", "share", "shares", "price", "prices", "ticker", "trend", "trends",
+    "news", "sentiment", "buy", "sell", "hold", "invest", "investing", "investment",
+    "worth", "bullish", "bearish", "market", "value", "quote", "trading", "etf", "crypto",
+    "latest", "current", "today", "recommend", "recommendation", "good", "safe", "analysis",
+}
+_NOT_TICKERS = {
+    "I", "A", "AI", "US", "USA", "USD", "INR", "EUR", "GBP", "SMA", "EMA", "RSI", "ETF", "IPO",
+    "CEO", "CFO", "EPS", "PE", "ML", "NLP", "OK", "BUY", "SELL", "HOLD", "NEWS", "NOW", "ALL",
+    "FOR", "THE", "AND", "ARE", "YOU", "CAN", "HOW", "WHY", "WHO", "ANY", "DO", "IS", "IT", "OR",
+}
+
+_stopwords_cache: set[str] | None = None
+
+
+def _stop() -> set[str]:
+    global _stopwords_cache
+    if _stopwords_cache is None:
+        try:
+            from nltk.corpus import stopwords
+            _stopwords_cache = set(stopwords.words("english"))
+        except Exception:
+            _stopwords_cache = {"what", "is", "the", "of", "a", "an", "to", "for", "me", "tell", "about",
+                                "how", "should", "i", "in", "on", "and", "or", "show", "give", "my"}
+        _stopwords_cache |= {"tell", "show", "give", "please", "hello", "hi", "hey"}
+    return _stopwords_cache
+
+
+@lru_cache(maxsize=512)
+def _is_valid_symbol(sym: str) -> bool:
+    """True if Yahoo Finance has recent price data for this symbol."""
+    try:
+        return not yf.Ticker(sym).history(period="5d").empty
+    except Exception:
+        return False
+
+
+@lru_cache(maxsize=256)
+def _search_symbol(name: str) -> str | None:
+    """Look a company name up on Yahoo Finance search; return the best matching symbol."""
+    try:
+        quotes = yf.Search(name, max_results=6).quotes
+    except Exception:
+        return None
+    words = [w for w in re.findall(r"[a-z0-9]+", name.lower()) if len(w) > 1]
+    if not words:
+        return None
+    for kind in ("EQUITY", "CRYPTOCURRENCY", "ETF", "INDEX"):
+        for q in quotes:
+            label = f"{q.get('shortname', '')} {q.get('longname', '')} {q.get('symbol', '')}".lower()
+            if q.get("quoteType") == kind and all(w in label for w in words):
+                return q.get("symbol")
+    return None
+
+
 def extract_ticker(text: str) -> str | None:
     """
-    Extract a stock ticker/company from user input.
+    Extract a stock ticker/company from user input; works for any listed stock.
 
     Priority order:
-        1. Direct ticker match (e.g. "AAPL", "NVDA")
-        2. Ticker map lookup (company name → ticker)
-        3. spaCy NER ORG entity → ticker map lookup
+        1. Known ticker in the text (e.g. "AAPL", "NVDA")
+        2. Company-name lookup in TICKER_MAP (longest name first)
+        3. Any other ticker-shaped token (e.g. "SBUX", "7203.T", "SOL-USD"),
+           accepted only if Yahoo Finance has price data for it
+        4. Company-name candidates (spaCy ORG entities, capitalised phrases, or the
+           words left after removing filler) resolved with Yahoo Finance search
     """
     lower = text.lower()
+    known = {v.upper() for v in TICKER_MAP.values()}
 
-    # 1 — Check for explicit ticker symbols (3-5 uppercase letters)
-    explicit = re.findall(r'\b([A-Z]{2,5}(?:\.[A-Z]{1,2})?)\b', text)
-    for match in explicit:
-        if match.upper() in {v.upper() for v in TICKER_MAP.values()}:
+    # 1 - explicit ticker already in the map
+    for match in re.findall(r'\b([A-Z]{2,5}(?:\.[A-Z]{1,2})?)\b', text):
+        if match.upper() in known:
             return match.upper()
 
-    # 2 — Company name keyword match in ticker map (longest match first)
-    sorted_names = sorted(TICKER_MAP.keys(), key=len, reverse=True)
-    for name in sorted_names:
-        if name in lower:
+    # 2 - company name keyword match in ticker map (longest match first)
+    for name in sorted(TICKER_MAP.keys(), key=len, reverse=True):
+        if re.search(rf"(?<![a-z0-9]){re.escape(name)}(?![a-z0-9])", lower):
             return TICKER_MAP[name]
 
-    # 3 — spaCy NER fallback
-    nlp_result = nlp_analyze(text)
-    for company in nlp_result.get("companies", []):
-        ticker = TICKER_MAP.get(company.lower())
-        if ticker:
-            return ticker
-        # Use the raw ORG name as a ticker guess (e.g. "RELIANCE")
-        return company.upper()
+    # 3 - any other ticker-shaped token, verified against Yahoo
+    for tok in re.findall(r"\^?[A-Z0-9]{1,6}(?:[.-][A-Z]{1,3})?", text):
+        if tok in _NOT_TICKERS or not any(ch.isalpha() for ch in tok):
+            continue
+        if len(tok) < 2:
+            continue
+        if _is_valid_symbol(tok):
+            return tok
 
+    # 4 - resolve company names through Yahoo search
+    candidates: list[str] = []
+    try:
+        candidates += list(nlp_analyze(text).get("companies", []))
+    except Exception:
+        pass
+    stop = _stop() | _FINANCE_WORDS
+    candidates += re.findall(r"\b[A-Z][\w&.\-]*(?:\s+[A-Z][\w&.\-]*)*", text)
+    if any(w in lower for w in _FINANCE_WORDS):
+        leftover = [w for w in re.findall(r"[A-Za-z0-9&.\-]+", text) if w.lower() not in stop]
+        if 0 < len(leftover) <= 3:
+            candidates.append(" ".join(leftover))
+    seen = set()
+    for cand in candidates:
+        words = [w for w in cand.split() if w.lower() not in stop]
+        phrase = " ".join(words).strip()
+        if len(phrase) < 3 or phrase.lower() in seen:
+            continue
+        seen.add(phrase.lower())
+        sym = TICKER_MAP.get(phrase.lower()) or _search_symbol(phrase)
+        if sym:
+            return sym
     return None
 
 

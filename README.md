@@ -134,7 +134,7 @@ c:\Projects\KITS\Fintech\
 
 - Natural language understanding — no need to use exact commands
 - 4 intent classes: `stock_price`, `market_trend`, `news_sentiment`, `recommendation`
-- 28 companies & tickers supported out-of-the-box (US, Indian stocks, crypto)
+- **Any global stock**: ~120 common names resolve instantly; any other ticker (e.g. `SBUX`, `7203.T`, `SOL-USD`) or company name (e.g. "Zalando", "Logitech", "Airbus") is verified/resolved through Yahoo Finance search
 - Graceful fallback for unknown queries
 
 ### 📈 Live Stock Data
@@ -369,7 +369,7 @@ Measured by `python backend/evaluate.py` (results in `data/evaluation.json`, ser
 | --- | --- | --- |
 | Intent classification | 5-fold CV on 201 training examples | Acc 86.1%, F1 85.9% |
 | Intent classification | 47 held-out hand-written queries | Acc 91.5%, P 92.6%, R 91.7%, F1 91.5% |
-| Entity (ticker) extraction | 25 hand-written queries (incl. 5 with no entity) | Acc / F1 100% (small, easy set) |
+| Entity (ticker) extraction | 33 hand-written queries (8 global names, 5 with no entity) | Acc / F1 100% (small set) |
 | Trend signal (SMA-14) | Walk-forward, 5-day forward direction, AAPL/MSFT/TSLA, 1,316 signals | **49.9%** vs 52.8% for an "always up" baseline |
 
 ### Can a trend signal predict direction? (`backend/trend_experiment.py`)

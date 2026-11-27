@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-27 15:53",
+  "generated_at": "2026-11-27 16:44",
   "intent": {
     "training_size": 201,
     "cross_validation_5fold": {
@@ -39,7 +39,7 @@
     }
   },
   "entity": {
-    "n": 25,
+    "n": 33,
     "accuracy": 100.0,
     "precision": 100.0,
     "recall": 100.0,
