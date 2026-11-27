@@ -34,32 +34,46 @@ def get_stock_price(symbol: str) -> dict:
     """
     try:
         ticker = yf.Ticker(symbol)
-        info = ticker.info
 
-        # yfinance returns currentPrice or regularMarketPrice depending on session
-        price: float = (
-            info.get("currentPrice")
-            or info.get("regularMarketPrice")
-            or info.get("ask")
-            or 0.0
-        )
-        prev_close: float = info.get("previousClose") or info.get("regularMarketPreviousClose") or 0.0
-        change: float = round(price - prev_close, 4) if prev_close else 0.0
-        change_pct: float = round((change / prev_close) * 100, 4) if prev_close else 0.0
+        # Price data comes from the chart endpoint (history), which works from
+        # cloud hosts; the quoteSummary endpoint behind `.info` is often blocked.
+        hist = ticker.history(period="5d")
+        if hist.empty:
+            return {"error": f"No price data found for {symbol.upper()}", "symbol": symbol.upper()}
 
-        result = {
-            "symbol": info.get("symbol", symbol.upper()),
-            "name": info.get("longName") or info.get("shortName", "N/A"),
+        last = hist.iloc[-1]
+        price = float(last["Close"])
+        prev_close = float(hist["Close"].iloc[-2]) if len(hist) > 1 else 0.0
+        change = round(price - prev_close, 4) if prev_close else 0.0
+        change_pct = round((change / prev_close) * 100, 4) if prev_close else 0.0
+
+        # Optional metadata — best effort only.
+        name, currency = symbol.upper(), None
+        try:
+            currency = ticker.fast_info.get("currency")
+        except Exception:
+            pass
+        try:
+            info = ticker.info or {}
+            name = info.get("longName") or info.get("shortName") or name
+            currency = currency or info.get("currency")
+        except Exception:
+            pass
+        if not currency:
+            currency = "INR" if symbol.upper().endswith((".NS", ".BO")) else "USD"
+
+        return {
+            "symbol": symbol.upper(),
+            "name": name,
             "price": round(price, 4),
-            "open": round(info.get("open") or info.get("regularMarketOpen") or 0.0, 4),
-            "high": round(info.get("dayHigh") or info.get("regularMarketDayHigh") or 0.0, 4),
-            "low": round(info.get("dayLow") or info.get("regularMarketDayLow") or 0.0, 4),
-            "volume": info.get("volume") or info.get("regularMarketVolume") or 0,
+            "open": round(float(last["Open"]), 4),
+            "high": round(float(last["High"]), 4),
+            "low": round(float(last["Low"]), 4),
+            "volume": int(last["Volume"]),
             "change": change,
             "change_pct": change_pct,
-            "currency": info.get("currency", "USD"),
+            "currency": currency,
         }
-        return result
 
     except Exception as e:
         return {"error": str(e), "symbol": symbol.upper()}
