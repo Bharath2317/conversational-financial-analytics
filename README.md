@@ -141,7 +141,7 @@ c:\Projects\KITS\Fintech\
 
 - Real-time price, open, high, low, volume, change %
 - Full OHLCV history (configurable period: `1d` to `5y`)
-- Supports: AAPL, TSLA, MSFT, GOOGL, AMZN, NVDA, META, NFLX, RELIANCE.NS, TATAMOTORS.NS, INFY.NS, BTC-USD, ETH-USD, and more
+- Supports: AAPL, TSLA, MSFT, GOOGL, AMZN, NVDA, META, NFLX, RELIANCE.NS, TMPV.NS, INFY.NS, BTC-USD, ETH-USD, and more
 
 ### 📊 Market Trend Analysis
 
@@ -318,7 +318,7 @@ http://localhost:8000
 | _"Is Apple bullish or bearish?"_ | `market_trend`   | AAPL          | Computes SMA-14 + EMA-14 trend      |
 | _"Latest news about Nvidia"_     | `news_sentiment` | NVDA          | Fetches real RSS headlines + scores |
 | _"Should I buy Amazon?"_         | `recommendation` | AMZN          | BUY/HOLD/SELL using 4 signals       |
-| _"TATA stock price"_             | `stock_price`    | TATAMOTORS.NS | Handles Indian NSE stocks           |
+| _"TATA stock price"_             | `stock_price`    | TMPV.NS | Handles Indian NSE stocks           |
 | _"Is Bitcoin safe to invest?"_   | `recommendation` | BTC-USD       | Works with crypto too               |
 
 ---
@@ -371,6 +371,19 @@ Measured by `python backend/evaluate.py` (results in `data/evaluation.json`, ser
 | Intent classification | 47 held-out hand-written queries | Acc 91.5%, P 92.6%, R 91.7%, F1 91.5% |
 | Entity (ticker) extraction | 25 hand-written queries (incl. 5 with no entity) | Acc / F1 100% (small, easy set) |
 | Trend signal (SMA-14) | Walk-forward, 5-day forward direction, AAPL/MSFT/TSLA, 1,316 signals | **49.9%** vs 52.8% for an "always up" baseline |
+
+### Can a trend signal predict direction? (`backend/trend_experiment.py`)
+
+To try to improve the trend signal, 19 stocks (US + NSE, 10 years of daily closes) were used to test price-vs-SMA (5–50 days), SMA crossovers (5/20 … 50/200), momentum (5–120 days), mean-reversion variants and RSI, at 5- and 20-day horizons. Configurations were ranked on the first 60% of each series and scored on the last 40% (out-of-sample), against an "always predict up" baseline.
+
+| Horizon | Best out-of-sample signal | Accuracy | Always-up baseline |
+| ------- | ------------------------- | -------- | ------------------ |
+| 5 days  | SMA 50/200 crossover      | 51.5%    | 54.2%              |
+| 20 days | Momentum 120 days         | 52.2%    | 57.5%              |
+
+**Result:** no signal beat the baseline at either horizon, and the original SMA-14 rule (≈51%) is typical. Stock prices rose over the period, so "always up" is hard to beat with simple price rules. So the trend feature is now described as a **descriptive** indicator (where price sits relative to its recent average), and the chatbot says so in its answers. The "~82% trend accuracy" in the dissertation could not be reproduced and should be reworded.
+
+Also fixed: `TATAMOTORS.NS` no longer exists on Yahoo Finance after Tata Motors' 2025 demerger; "Tata / Tata Motors" now maps to `TMPV.NS`.
 
 **Not measured automatically:** response relevance, conversation success rate and response time (they need human ratings or a live server).
 

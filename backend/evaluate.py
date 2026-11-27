@@ -109,7 +109,7 @@ ENTITY_TESTS = [
     ("Ethereum trend", "ETH-USD"),
     ("TCS share price", "TCS.NS"),
     ("Wipro news sentiment", "WIPRO.NS"),
-    ("tata motors stock", "TATAMOTORS.NS"),
+    ("tata motors stock", "TMPV.NS"),
     ("what's the TSLA price", "TSLA"),
     ("is AAPL a buy", "AAPL"),
     ("NVDA trend", "NVDA"),

@@ -278,8 +278,8 @@ TICKER_MAP: dict[str, str] = {
     "salesforce": "CRM",
     "oracle": "ORCL",
     # Indian stocks (NSE via yfinance suffix .NS)
-    "tata": "TATAMOTORS.NS",
-    "tata motors": "TATAMOTORS.NS",
+    "tata": "TMPV.NS",
+    "tata motors": "TMPV.NS",
     "reliance": "RELIANCE.NS",
     "infosys": "INFY.NS",       "infy": "INFY.NS",
     "wipro": "WIPRO.NS",
@@ -421,7 +421,10 @@ def _respond_market_trend(ticker: str) -> dict:
         f"(price vs MA: {sma['deviation_pct']:+.2f}%)\n"
         f"   EMA-14 Trend : {icons[ema['trend']]} {ema['trend'].upper()}  "
         f"(price vs EMA: {ema['deviation_pct']:+.2f}%)\n"
-        f"   Recent Prices: {report['recent_prices']}"
+        f"   Recent Prices: {report['recent_prices']}\n\n"
+        f"   ℹ️  This describes where price sits relative to its recent average. "
+        f"In back-tests on 19 stocks (10 yrs) such signals did not predict "
+        f"future direction better than chance."
     )
     return {"intent": "market_trend", "ticker": ticker, "response": reply, "data": report}
 
@@ -535,7 +538,8 @@ def _respond_recommendation(ticker: str) -> dict:
         f"   Signal Breakdown:\n{signals_text}\n\n"
         f"   ─────────────────────────────\n"
         f"   📌 Final Signal : {final}\n\n"
-        f"   ⚠️  Disclaimer: This is for educational purposes only. "
+        f"   ⚠️  Trend/momentum signals are descriptive, not predictive (see README). "
+        f"This is for educational purposes only. "
         f"Always do your own research before investing."
     )
 
