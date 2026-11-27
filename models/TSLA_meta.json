@@ -1,0 +1,26 @@
+{
+  "symbol": "TSLA",
+  "best_model": "Ridge",
+  "r2_score": 0.7883,
+  "trained_on": "2026-03-05 14:09",
+  "data_rows": 451,
+  "period": "2y",
+  "last_price": 405.94000244140625,
+  "all_results": {
+    "RandomForest": {
+      "mae": 15.7104,
+      "rmse": 20.0539,
+      "r2": 0.3034
+    },
+    "GradientBoosting": {
+      "mae": 17.1639,
+      "rmse": 22.5416,
+      "r2": 0.1199
+    },
+    "Ridge": {
+      "mae": 8.942,
+      "rmse": 11.0555,
+      "r2": 0.7883
+    }
+  }
+}

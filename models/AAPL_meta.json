@@ -1,0 +1,26 @@
+{
+  "symbol": "AAPL",
+  "best_model": "Ridge",
+  "r2_score": 0.7917,
+  "trained_on": "2026-03-05 14:09",
+  "data_rows": 451,
+  "period": "2y",
+  "last_price": 262.5199890136719,
+  "all_results": {
+    "RandomForest": {
+      "mae": 12.4401,
+      "rmse": 14.2356,
+      "r2": -1.9266
+    },
+    "GradientBoosting": {
+      "mae": 15.6332,
+      "rmse": 17.3669,
+      "r2": -3.3557
+    },
+    "Ridge": {
+      "mae": 2.7985,
+      "rmse": 3.7981,
+      "r2": 0.7917
+    }
+  }
+}

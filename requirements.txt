@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+yfinance
+pandas
+numpy
+scikit-learn
+spacy
+nltk
+textblob
+requests
+python-multipart
+feedparser
+joblib

@@ -1,0 +1,146 @@
+"""
+stock_api.py — Financial data module using yfinance.
+
+Functions:
+    get_stock_price(symbol)          → Current price snapshot as JSON
+    get_stock_history(symbol, period) → OHLCV history as JSON
+"""
+
+import yfinance as yf
+import json
+from typing import Union
+
+
+def get_stock_price(symbol: str) -> dict:
+    """
+    Fetch the latest price snapshot for a given stock symbol.
+
+    Args:
+        symbol (str): Stock ticker, e.g. "AAPL", "TSLA"
+
+    Returns:
+        dict: {
+            "symbol": str,
+            "name": str,
+            "price": float,
+            "open": float,
+            "high": float,
+            "low": float,
+            "volume": int,
+            "change": float,       # absolute change from previous close
+            "change_pct": float,   # percentage change (%)
+            "currency": str
+        }
+    """
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+
+        # yfinance returns currentPrice or regularMarketPrice depending on session
+        price: float = (
+            info.get("currentPrice")
+            or info.get("regularMarketPrice")
+            or info.get("ask")
+            or 0.0
+        )
+        prev_close: float = info.get("previousClose") or info.get("regularMarketPreviousClose") or 0.0
+        change: float = round(price - prev_close, 4) if prev_close else 0.0
+        change_pct: float = round((change / prev_close) * 100, 4) if prev_close else 0.0
+
+        result = {
+            "symbol": info.get("symbol", symbol.upper()),
+            "name": info.get("longName") or info.get("shortName", "N/A"),
+            "price": round(price, 4),
+            "open": round(info.get("open") or info.get("regularMarketOpen") or 0.0, 4),
+            "high": round(info.get("dayHigh") or info.get("regularMarketDayHigh") or 0.0, 4),
+            "low": round(info.get("dayLow") or info.get("regularMarketDayLow") or 0.0, 4),
+            "volume": info.get("volume") or info.get("regularMarketVolume") or 0,
+            "change": change,
+            "change_pct": change_pct,
+            "currency": info.get("currency", "USD"),
+        }
+        return result
+
+    except Exception as e:
+        return {"error": str(e), "symbol": symbol.upper()}
+
+
+def get_stock_history(symbol: str, period: str = "7d") -> dict:
+    """
+    Fetch OHLCV historical data for a given stock symbol.
+
+    Args:
+        symbol (str): Stock ticker, e.g. "AAPL", "TSLA"
+        period (str): Data period — valid values:
+                      "1d", "5d", "7d", "1mo", "3mo", "6mo",
+                      "1y", "2y", "5y", "10y", "ytd", "max"
+
+    Returns:
+        dict: {
+            "symbol": str,
+            "period": str,
+            "records": int,
+            "history": [
+                {
+                    "date": str,
+                    "open": float,
+                    "high": float,
+                    "low": float,
+                    "close": float,
+                    "volume": int
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        ticker = yf.Ticker(symbol)
+        df = ticker.history(period=period)
+
+        if df.empty:
+            return {
+                "error": f"No historical data found for '{symbol}' with period='{period}'.",
+                "symbol": symbol.upper(),
+                "period": period,
+            }
+
+        history = []
+        for date, row in df.iterrows():
+            history.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "open": round(float(row["Open"]), 4),
+                "high": round(float(row["High"]), 4),
+                "low": round(float(row["Low"]), 4),
+                "close": round(float(row["Close"]), 4),
+                "volume": int(row["Volume"]),
+            })
+
+        return {
+            "symbol": symbol.upper(),
+            "period": period,
+            "records": len(history),
+            "history": history,
+        }
+
+    except Exception as e:
+        return {"error": str(e), "symbol": symbol.upper(), "period": period}
+
+
+# ─── Quick demo if run directly ─────────────────────────────────────────────
+
+if __name__ == "__main__":
+    for sym in ["AAPL", "TSLA", "GOOGL"]:
+        print(f"\n{'='*50}")
+        print(f"  Stock Price — {sym}")
+        print(f"{'='*50}")
+        price_data = get_stock_price(sym)
+        print(json.dumps(price_data, indent=2))
+
+        print(f"\n  Stock History — {sym} (7d)")
+        print(f"{'─'*50}")
+        history_data = get_stock_history(sym, period="7d")
+        # Print just the summary + last 3 rows for brevity
+        summary = {k: v for k, v in history_data.items() if k != "history"}
+        print(json.dumps(summary, indent=2))
+        print("  Last 3 entries:")
+        print(json.dumps(history_data.get("history", [])[-3:], indent=2))

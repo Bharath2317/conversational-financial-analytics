@@ -1,0 +1,26 @@
+{
+  "symbol": "MSFT",
+  "best_model": "Ridge",
+  "r2_score": 0.9551,
+  "trained_on": "2026-03-05 14:09",
+  "data_rows": 451,
+  "period": "2y",
+  "last_price": 405.20001220703125,
+  "all_results": {
+    "RandomForest": {
+      "mae": 10.6149,
+      "rmse": 13.4076,
+      "r2": 0.8931
+    },
+    "GradientBoosting": {
+      "mae": 10.3652,
+      "rmse": 13.7959,
+      "r2": 0.8868
+    },
+    "Ridge": {
+      "mae": 6.1568,
+      "rmse": 8.6886,
+      "r2": 0.9551
+    }
+  }
+}
